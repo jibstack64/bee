@@ -14,7 +14,7 @@ const (
 	SPLITTER = ';'
 
 	// Symbols that cannot be used in object names
-	INVALID_SYMBOLS = "{}[]-=+/\\,.<>:;()!\"£$%^&*|?~' "
+	INVALID_SYMBOLS = "{}[]-=+/\\,.<>:;()!\"£$%^&*|?~'@ "
 
 	// Define, set, func_in
 	SET, FUNC_IN = '<', ':'

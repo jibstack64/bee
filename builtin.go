@@ -50,10 +50,9 @@ func Converter[T any]() func(ob *Object, v ...*Object) (*Object, error) {
 
 var (
 	// Types
-	INT    = NewBuiltIn("int", Converter[int]())
 	STRING = NewBuiltIn("string", Converter[string]())
 	BOOL   = NewBuiltIn("bool", Converter[bool]())
-	DEC    = NewBuiltIn("dec", Converter[float64]())
+	NUM    = NewBuiltIn("num", Converter[float64]())
 	NIL    = NewBuiltIn("nil", func(ob *Object, v ...*Object) (*Object, error) {
 		if e := ArgCheck(len(v), 0, 0); e != nil {
 			return nil, e.Format(ob.Symbol)
@@ -73,16 +72,6 @@ var (
 	})
 
 	// Constructors
-	NEW = NewBuiltIn("new", func(ob *Object, v ...*Object) (*Object, error) {
-		if e := ArgCheck(len(v), 0, 1); e != nil {
-			return nil, e.Format(ob.Symbol)
-		}
-		if len(v) > 0 {
-			return NewObject("", v[0].Data), nil
-		} else {
-			return NewObject("", nil), nil
-		}
-	})
 	LINK = NewBuiltIn("link", func(ob *Object, v ...*Object) (*Object, error) {
 		if e := ArgCheck(len(v), 1, len(global)); e != nil {
 			return nil, e.Format(ob.Symbol)
@@ -96,7 +85,7 @@ var (
 			return nil, e.Format(ob.Symbol)
 		}
 		if len(v) > 0 {
-			fmt.Printf("%s", v[0].Data)
+			fmt.Print(StringConvert(v[0].Data))
 		}
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
@@ -111,7 +100,7 @@ var (
 			return nil, e.Format(ob.Symbol)
 		}
 		for _, o := range v {
-			fmt.Printf("%s", o.Data)
+			fmt.Print(StringConvert(o.Data))
 		}
 		return nil, nil
 	})

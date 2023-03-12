@@ -34,5 +34,8 @@ var (
 	InvalidObjectError = NewError("invalid object '%s'.")
 	NoObjectError      = NewError("no object provided to '%s'.")
 
-	NotAssignableError = NewError("object '%s' is not assignable.")
+	NotAssignableError = NewError("object '%s' is not assignable (P.S. '@' is forbidden - builtins only!).")
+	NotCallableError   = NewError("object '%s' is not callable.")
+
+	NumericsError = NewError("numerics error '%s'.")
 )

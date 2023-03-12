@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,8 +23,7 @@ func NewToken(origin string, object *Object) *Token {
 // Regex
 var (
 	stringMatcher = GenerateRegexp("^\"[^\"]*\"$")
-	decMatcher    = GenerateRegexp("^-?\\d+(?:\\.\\d+)?$")
-	intMatcher    = GenerateRegexp("^-?\\d+$")
+	numMatcher    = GenerateRegexp("^-?\\d+(?:\\.\\d+)?$")
 )
 
 // Generates a regex, ignoring the error.
@@ -38,17 +38,21 @@ func GenerateRegexp(regex string) *regexp.Regexp {
 // Converts the provided symbol to it's relative object.
 // If one is not found, then it is parsed as a string or another valid type.
 // If it cannot be parsed into a type, then an error is returned.
-func Objectify(symbol string) (*Object, *Error) {
-	ob := FetchObject(symbol) // trim whitespace
+// This also handles addition, multiplication, division, etc.
+func Objectify(s string) (*Object, *Error) {
+	ob := FetchObject(s)
 	if ob == nil {
-		if stringMatcher.Find([]byte(symbol)) != nil {
-			ob = NewObject("", symbol[1:]+symbol[:len(symbol)-2])
-		} else if decMatcher.Find([]byte(symbol)) != nil {
-			c, _ := strconv.ParseFloat(symbol, 64)
+		if c := stringMatcher.Find([]byte(s)); c != nil {
+			ob = NewObject("", strings.ReplaceAll(string(c[1:len(s)-1]), "\\n", "\n"))
+		} else if numMatcher.Find([]byte(s)) != nil {
+			c, _ := strconv.ParseFloat(s, 64)
 			ob = NewObject("", c)
-		} else if intMatcher.Find([]byte(symbol)) != nil {
-			c, _ := strconv.ParseInt(symbol, 10, 64)
-			ob = NewObject("", c)
+		} else if s == "true" {
+			ob = NewObject("", true)
+		} else if s == "false" {
+			ob = NewObject("", false)
+		} else if s == "nil" {
+			ob = NewObject("", nil)
 		} else {
 			return nil, InvalidObjectError
 		}
@@ -74,10 +78,23 @@ func GenerateTokens(code string) ([][]*Token, error) {
 				if len(line)-1 == c {
 					return nil, SyntaxError.Format(string(line[c]) + "' in '" + line)
 				} else {
-					if string(line[c+1]) == string(FUNC_IN) {
+					switch string(line[c+1]) {
+					case string(FUNC_IN):
 						allTokens[l] = append(allTokens[l], NewToken(string(SET)+string(FUNC_IN), nil))
 						c++
-					} else {
+					case "+":
+						allTokens[l] = append(allTokens[l], NewToken(string(SET)+"+", nil))
+						c++
+					case "-":
+						allTokens[l] = append(allTokens[l], NewToken(string(SET)+"-", nil))
+						c++
+					case "*":
+						allTokens[l] = append(allTokens[l], NewToken(string(SET)+"*", nil))
+						c++
+					case "/":
+						allTokens[l] = append(allTokens[l], NewToken(string(SET)+"/", nil))
+						c++
+					default:
 						allTokens[l] = append(allTokens[l], NewToken(string(SET), nil))
 					}
 				}
@@ -96,64 +113,132 @@ func GenerateTokens(code string) ([][]*Token, error) {
 	return allTokens, nil
 }
 
+// Converts v to a string.
+func StringConvert(v interface{}) string {
+	switch c := v.(type) {
+	case float64:
+		return strconv.FormatFloat(c, 'g', -1, 64)
+	case bool:
+		return strconv.FormatBool(c)
+	case nil:
+		return "nil"
+	default:
+		return c.(string)
+	}
+}
+
 // Parses and runs the tokens provided.
 func Run(tokens []*Token) error {
 	// parse objects, strings, etc.
-	toRemove := []int{}
-	for i := len(tokens) - 1; i > -1; i-- {
-		token := tokens[i]
-		if token.Origin == "" {
-			toRemove = append(toRemove, i)
-			continue
-		}
-		// attempt to get object
-		if token.Origin != string(SET) && token.Origin != string(SET)+string(FUNC_IN) {
-			if o, err := Objectify(token.Origin); err != nil {
-				if i < len(tokens)-1 {
-					if tokens[i+1].Origin == string(SET) {
-						// ensure no invalid
-						for _, c1 := range INVALID_SYMBOLS {
-							for _, c2 := range token.Origin {
-								if c1 == c2 {
-									return InvalidObjectError.Format(token.Origin)
-								}
-							}
-						}
-						token.Object = NewObject(token.Origin, nil)
+	for t := len(tokens) - 1; t > -1; t-- {
+		token := tokens[t]
+		if token.Origin[0] == SET {
+			var or string
+			if len(token.Origin) > 1 {
+				or = token.Origin
+			} else {
+				or = string(SET) + "#"
+			}
+			if or[1] == FUNC_IN {
+				// function
+				if tokens[t-1].Object != nil {
+					if tokens[t-1].Object.Symbol == "" {
+						return NotCallableError.Format(tokens[t-1].Origin)
 					}
 				}
-				return err.Format(token.Origin)
-			} else {
-				token.Object = o
-			}
-		}
-	}
-
-	// remove
-	for _, i := range toRemove {
-		tokens = append(tokens[:i-(len(tokens)-len(toRemove))], tokens[i-(len(tokens)-len(toRemove))+1:]...)
-	}
-
-	// run!
-	for i, token := range tokens {
-		// set
-		if token.Origin[0] == SET {
-			if i == 0 || i == len(tokens)-1 {
-				return NoObjectError.Format(token.Origin)
-			} else {
-				if token.Origin == string(SET)+string(FUNC_IN) {
-					c, err := tokens[i-1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[i-1].Object, tokens[i+1].Object)
+				if o := FetchObject(tokens[t-1].Origin); o != nil {
+					tokens[t-1].Object = o // set obj
+					r, err := tokens[t-1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t-1].Object, tokens[t+1].Object)
 					if err != nil {
 						return err
 					} else {
-						tokens[i-1].Object.Result = c
+						tokens[t-1].Object.Result = r
 					}
-				} else if token.Origin == string(SET) {
-					if tokens[i+1].Object.Result != nil {
-						tokens[i-1].Object.Data = tokens[i+1].Object.Result.Data
+				}
+			} else {
+				// set value
+				if tokens[t-1].Object == nil {
+					if o, err := Objectify(tokens[t-1].Origin); err != nil {
+						for _, c1 := range INVALID_SYMBOLS {
+							for _, c2 := range tokens[t-1].Origin {
+								if c1 == c2 {
+									return SyntaxError.Format(tokens[t-1].Origin)
+								}
+							}
+						}
+						tokens[t-1].Object = NewObject(tokens[t-1].Origin, nil)
 					} else {
-						tokens[i-1].Object.Data = tokens[i+1].Object.Data
+						tokens[t-1].Object = o
 					}
+				}
+				// no no!
+				if tokens[t-1].Origin[0] == BUILT_IN {
+					return NotAssignableError.Format(tokens[t-1].Origin)
+				}
+				// func funcs!
+				if tokens[t+1].Object.Result == nil && tokens[t+1].Origin[0] == '@' {
+					c, err := tokens[t+1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t+1].Object)
+					if err != nil {
+						return err
+					} else {
+						tokens[t+1].Object.Result = c
+					}
+				}
+				if or[1] == '#' {
+					if tokens[t+1].Object.Result != nil {
+						tokens[t-1].Object.Data = tokens[t+1].Object.Result.Data
+					} else {
+						tokens[t-1].Object.Data = tokens[t+1].Object.Data
+					}
+				} else {
+					// STOP OBJECT BEING OVERWRITTEN!!!!
+					ob := tokens[t-1].Object
+					tokens[t-1].Object = NewObject("", ob.Data)
+					// conversion to int/string, etc.
+					var v2 interface{}
+					if tokens[t+1].Object.Result != nil {
+						v2 = tokens[t+1].Object.Result.Data
+					} else {
+						v2 = tokens[t+1].Object.Data
+					}
+					switch v1 := tokens[t-1].Object.Data.(type) {
+					case float64:
+						switch or[1] {
+						case '+':
+							tokens[t-1].Object.Data = v1 + v2.(float64)
+						case '-':
+							tokens[t-1].Object.Data = v1 - v2.(float64)
+						case '*':
+							tokens[t-1].Object.Data = v1 * v2.(float64)
+						case '/':
+							tokens[t-1].Object.Data = v1 / v2.(float64)
+						}
+					case string:
+						switch or[1] {
+						case '+':
+							tokens[t-1].Object.Data = v1 + v2.(string)
+						case '-':
+							return NumericsError.Format(tokens[t-1].Origin)
+						case '*':
+							return NumericsError.Format(tokens[t-1].Origin)
+						case '/':
+							return NumericsError.Format(tokens[t-1].Origin)
+						}
+					case bool:
+						fmt.Println("bool!")
+						return NumericsError.Format(tokens[t-1].Origin)
+					case nil:
+						return NumericsError.Format(tokens[t-1].Origin)
+					}
+				}
+			}
+		} else {
+			// object
+			if token.Object == nil {
+				if o, err := Objectify(token.Origin); err != nil {
+					return err.Format(token.Origin)
+				} else {
+					token.Object = o
 				}
 			}
 		}
