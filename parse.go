@@ -71,10 +71,11 @@ func GenerateTokens(code string) ([][]*Token, error) {
 		allTokens = append(allTokens, []*Token{})
 		tmp := ""
 
+		if strings.HasPrefix(strings.TrimSpace(line), COMMENT_START) {
+			continue
+		}
+
 		for c := 0; c < len(line); c++ {
-			if len(line) >= len(COMMENT_START) && line[0:len(COMMENT_START)] == COMMENT_START {
-				break
-			}
 			// set/define/func
 			if string(line[c]) == string(SET) {
 				allTokens[l] = append(allTokens[l], NewToken(strings.TrimSpace(tmp), nil))
@@ -189,7 +190,7 @@ func CheckInvalids(t string) *Error {
 }
 
 // Parses and runs the tokens provided.
-func Run(tokens []*Token) (error, int) {
+func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to change it around, shut up vscode
 	// parse objects, strings, etc.
 	for t := len(tokens) - 1; t > -1; t-- {
 		token := tokens[t]
