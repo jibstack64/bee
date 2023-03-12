@@ -1,0 +1,12 @@
+buzz
+
+hello_world.bee
+- jibstack64
+
+A "Hello World" program written in bee.
+
+;
+
+name < @in <: "Hey, what's your name?: ";
+
+@out <: "Hello world, and you, " <+ name <+ ".\n";

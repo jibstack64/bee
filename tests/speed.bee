@@ -1,0 +1,21 @@
+buzz
+
+speed.bee
+- jibstack64
+
+A program to present the capability of @sleep.
+
+;
+
+track < 0;
+
+#program;
+
+track < track <+ 1;
+
+t < @string <: track;
+@out <: "Speed: " <+ t <+ "\n";
+
+@sleep <: 1 </ track;
+
+^program;

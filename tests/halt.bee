@@ -1,0 +1,19 @@
+buzz
+
+halt.bee
+- jibstack64
+
+A program to present halting capability in bee.
+
+;
+
+stop < false;
+
+#halt;
+
+input < @in <: "Do you want to stop?: ";
+stop < input <= "yes";
+
+!stop;
+
+^halt;

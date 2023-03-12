@@ -7,7 +7,7 @@
 **Basic example:**
 ```c++
 
-<bu This is a comment. zz>
+buzz This is a comment;
 
 #program;
 
@@ -18,3 +18,5 @@ name < @in <: "What's your name?: ";
 ^program;
 
 ```
+
+See more examples [here](https://github.com/jibstack64/bee/blob/master/tests).

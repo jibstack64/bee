@@ -19,8 +19,7 @@ const (
 	BLOCKING     = '!'
 
 	// Commenting
-	COMMENT_START = "<bu"
-	COMMENT_END   = "zz>"
+	COMMENT_START = "buzz"
 
 	// Disposable, result
 	DISPOSABLE = string(BUILT_IN) + ":disposable"

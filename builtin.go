@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -70,7 +71,7 @@ var (
 		if err != nil {
 			return nil, err
 		}
-		time.Sleep(time.Duration(x) * time.Second)
+		time.Sleep(time.Duration(x * float64(time.Second)))
 		return nil, nil
 	})
 
@@ -107,7 +108,7 @@ var (
 		if err != nil {
 			return nil, err
 		} else {
-			return NewObject(RESULT, input), nil
+			return NewObject(RESULT, strings.ReplaceAll(input, "\n", "")), nil
 		}
 	})
 	OUT = NewBuiltIn("out", func(ob *Object, v ...*Object) (*Object, error) {

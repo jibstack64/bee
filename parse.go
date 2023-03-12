@@ -66,22 +66,14 @@ func Objectify(s string) (*Object, *Error) {
 // Generates tokens from code.
 func GenerateTokens(code string) ([][]*Token, error) {
 	allTokens := [][]*Token{}
-	inComment := false // for comments
 	for l, line := range strings.Split(code, string(SPLITTER)) {
 
 		allTokens = append(allTokens, []*Token{})
 		tmp := ""
 
 		for c := 0; c < len(line); c++ {
-			if tmp == COMMENT_START {
-				tmp = ""
-				inComment = true
-			} else if tmp == COMMENT_END {
-				inComment = false
-			}
-			if inComment {
-				tmp += string(line[c])
-				continue
+			if len(line) >= len(COMMENT_START) && line[0:len(COMMENT_START)] == COMMENT_START {
+				break
 			}
 			// set/define/func
 			if string(line[c]) == string(SET) {
@@ -148,7 +140,7 @@ func StringConvert(v interface{}) (string, error) {
 func Float64Convert(v interface{}) (float64, error) {
 	switch c := v.(type) {
 	case string:
-		return strconv.ParseFloat(strings.ReplaceAll(c, "\n", ""), 64)
+		return strconv.ParseFloat(c, 64)
 	case bool:
 		if c {
 			return 1, nil
@@ -201,6 +193,9 @@ func Run(tokens []*Token) (error, int) {
 	// parse objects, strings, etc.
 	for t := len(tokens) - 1; t > -1; t-- {
 		token := tokens[t]
+		if len(token.Origin) == 0 { // hmm..?
+			continue
+		}
 		if token.Origin[0] == SET {
 			var or string
 			if len(token.Origin) > 1 {
