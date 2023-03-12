@@ -21,6 +21,10 @@ name < @in <: "What's your name?: ";
 
 See more examples [here](https://github.com/jibstack64/bee/blob/master/tests).
 
+> As a side-note: I do not suggest using this in your official projects. It is fairly unfinished and is quite spaghetti. I made it as a fun side-project; I might add some `raylib` bindings though!!
+
+> You can customise the language to your liking. Just get `go` installed, change the constants in `bee.go` and you can goofisize the language as much as you'd like.
+
 ---
 
 **Concept:**
