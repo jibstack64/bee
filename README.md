@@ -1,6 +1,6 @@
 # bee
 
-![GitHub](https://img.shields.io/github/license/jibstack64/bee) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jibstack64/bee)
+![GitHub](https://img.shields.io/github/license/jibstack64/bee) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/jibstack64/bee) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jibstack64/bee) ![GitHub all releases](https://img.shields.io/github/downloads/jibstack64/bee/total)
 
 *An extremely rudimentary scripting language.*
 
