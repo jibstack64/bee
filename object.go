@@ -51,3 +51,12 @@ func FetchObject(symbol string) *Object {
 	}
 	return nil
 }
+
+// Cleans up global.
+func DisposeGarbage() {
+	for id, object := range global {
+		if object.Symbol == RESULT {
+			delete(global, id)
+		}
+	}
+}

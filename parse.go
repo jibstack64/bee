@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -43,16 +42,16 @@ func Objectify(s string) (*Object, *Error) {
 	ob := FetchObject(s)
 	if ob == nil {
 		if c := stringMatcher.Find([]byte(s)); c != nil {
-			ob = NewObject("", strings.ReplaceAll(string(c[1:len(s)-1]), "\\n", "\n"))
+			ob = NewObject(DISPOSABLE, strings.ReplaceAll(string(c[1:len(s)-1]), "\\n", "\n"))
 		} else if numMatcher.Find([]byte(s)) != nil {
 			c, _ := strconv.ParseFloat(s, 64)
-			ob = NewObject("", c)
+			ob = NewObject(DISPOSABLE, c)
 		} else if s == "true" {
-			ob = NewObject("", true)
+			ob = NewObject(DISPOSABLE, true)
 		} else if s == "false" {
-			ob = NewObject("", false)
+			ob = NewObject(DISPOSABLE, false)
 		} else if s == "nil" {
-			ob = NewObject("", nil)
+			ob = NewObject(DISPOSABLE, nil)
 		} else {
 			return nil, InvalidObjectError
 		}
@@ -98,6 +97,8 @@ func GenerateTokens(code string) ([][]*Token, error) {
 						allTokens[l] = append(allTokens[l], NewToken(string(SET), nil))
 					}
 				}
+			} else if line[c] == FUNC_B[0] || line[c] == FUNC_B[1] {
+				allTokens[l] = append(allTokens[l], NewToken(string(line[c]), nil))
 			} else {
 				// add to tmp
 				tmp += string(line[c])
@@ -114,16 +115,56 @@ func GenerateTokens(code string) ([][]*Token, error) {
 }
 
 // Converts v to a string.
-func StringConvert(v interface{}) string {
+func StringConvert(v interface{}) (string, error) {
 	switch c := v.(type) {
 	case float64:
-		return strconv.FormatFloat(c, 'g', -1, 64)
+		return strconv.FormatFloat(c, 'g', -1, 64), nil
 	case bool:
-		return strconv.FormatBool(c)
+		return strconv.FormatBool(c), nil
 	case nil:
-		return "nil"
+		return "nil", nil
 	default:
-		return c.(string)
+		return c.(string), nil
+	}
+}
+
+// Converts v to a float64.
+func Float64Convert(v interface{}) (float64, error) {
+	switch c := v.(type) {
+	case string:
+		return strconv.ParseFloat(c, 64)
+	case bool:
+		if c {
+			return 1, nil
+		} else {
+			return 0, nil
+		}
+	case nil:
+		return 0, nil
+	default:
+		return c.(float64), nil
+	}
+}
+
+// Converts v to a boolean.
+func BooleanConvert(v interface{}) (bool, error) {
+	switch c := v.(type) {
+	case float64:
+		if c > 1 {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	case string:
+		if c == "true" {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	case nil:
+		return false, nil
+	default:
+		return c.(bool), nil
 	}
 }
 
@@ -148,7 +189,13 @@ func Run(tokens []*Token) error {
 				}
 				if o := FetchObject(tokens[t-1].Origin); o != nil {
 					tokens[t-1].Object = o // set obj
-					r, err := tokens[t-1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t-1].Object, tokens[t+1].Object)
+					var r *Object
+					var err error
+					if tokens[t+1].Object.Result != nil {
+						r, err = tokens[t-1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t-1].Object, tokens[t+1].Object.Result)
+					} else {
+						r, err = tokens[t-1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t-1].Object, tokens[t+1].Object)
+					}
 					if err != nil {
 						return err
 					} else {
@@ -193,7 +240,7 @@ func Run(tokens []*Token) error {
 				} else {
 					// STOP OBJECT BEING OVERWRITTEN!!!!
 					ob := tokens[t-1].Object
-					tokens[t-1].Object = NewObject("", ob.Data)
+					tokens[t-1].Object = NewObject(DISPOSABLE, ob.Data)
 					// conversion to int/string, etc.
 					var v2 interface{}
 					if tokens[t+1].Object.Result != nil {
@@ -225,7 +272,6 @@ func Run(tokens []*Token) error {
 							return NumericsError.Format(tokens[t-1].Origin)
 						}
 					case bool:
-						fmt.Println("bool!")
 						return NumericsError.Format(tokens[t-1].Origin)
 					case nil:
 						return NumericsError.Format(tokens[t-1].Origin)
@@ -243,6 +289,9 @@ func Run(tokens []*Token) error {
 			}
 		}
 	}
+
+	// clear garbage
+	DisposeGarbage()
 
 	return nil
 }

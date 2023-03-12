@@ -35,24 +35,24 @@ func ArgCheck(v int, min int, max int) *Error {
 }
 
 // Forms a converter for the given type.
-func Converter[T any]() func(ob *Object, v ...*Object) (*Object, error) {
+func Converter[T any](f func(v interface{}) (T, error)) func(ob *Object, v ...*Object) (*Object, error) {
 	return func(ob *Object, v ...*Object) (*Object, error) {
 		if e := ArgCheck(len(v), 1, 1); e != nil {
 			return nil, e.Format(ob.Symbol)
 		}
-		if r, ok := v[0].Data.(T); !ok {
-			return nil, ConversionError.Format(ob.Symbol)
-		} else {
-			return NewObject("", r), nil
+		a, err := f(v[0].Data)
+		if err != nil {
+			return nil, err
 		}
+		return NewObject(RESULT, a), nil
 	}
 }
 
 var (
 	// Types
-	STRING = NewBuiltIn("string", Converter[string]())
-	BOOL   = NewBuiltIn("bool", Converter[bool]())
-	NUM    = NewBuiltIn("num", Converter[float64]())
+	STRING = NewBuiltIn("string", Converter(StringConvert))
+	BOOL   = NewBuiltIn("bool", Converter(BooleanConvert))
+	NUM    = NewBuiltIn("num", Converter(Float64Convert))
 	NIL    = NewBuiltIn("nil", func(ob *Object, v ...*Object) (*Object, error) {
 		if e := ArgCheck(len(v), 0, 0); e != nil {
 			return nil, e.Format(ob.Symbol)
@@ -76,7 +76,7 @@ var (
 		if e := ArgCheck(len(v), 1, len(global)); e != nil {
 			return nil, e.Format(ob.Symbol)
 		}
-		return NewObject("", v), nil
+		return NewObject(RESULT, v), nil
 	})
 
 	// I/O
@@ -85,14 +85,15 @@ var (
 			return nil, e.Format(ob.Symbol)
 		}
 		if len(v) > 0 {
-			fmt.Print(StringConvert(v[0].Data))
+			s, _ := StringConvert(v[0].Data)
+			fmt.Print(s)
 		}
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			return nil, err
 		} else {
-			return NewObject("", input), nil
+			return NewObject(RESULT, input), nil
 		}
 	})
 	OUT = NewBuiltIn("out", func(ob *Object, v ...*Object) (*Object, error) {
@@ -100,7 +101,8 @@ var (
 			return nil, e.Format(ob.Symbol)
 		}
 		for _, o := range v {
-			fmt.Print(StringConvert(o.Data))
+			s, _ := StringConvert(o.Data)
+			fmt.Print(s)
 		}
 		return nil, nil
 	})

@@ -13,6 +13,10 @@ const (
 	// Splits 'lines'
 	SPLITTER = ';'
 
+	// Disposable, result
+	DISPOSABLE = string(BUILT_IN) + ":disposable"
+	RESULT     = string(BUILT_IN) + ":result"
+
 	// Symbols that cannot be used in object names
 	INVALID_SYMBOLS = "{}[]-=+/\\,.<>:;()!\"£$%^&*|?~'@ "
 
@@ -25,8 +29,9 @@ const (
 
 var (
 	// Arguments provided through the command-line
-	fileName   string
-	codeString string
+	fileName       string
+	codeString     string
+	generateGlobal bool
 
 	// All code
 	program string
@@ -57,11 +62,17 @@ func main() {
 			}
 		}
 	}
+	if generateGlobal {
+		for id, object := range global {
+			fmt.Printf("ID: %d.   SYMBOL: '%s'.   DATA: '%+s'\n", id, object.Symbol, object.Data)
+		}
+	}
 }
 
 func init() {
 	// parse flags
 	flag.StringVar(&fileName, "filename", "", "Specifies the input file.")
 	flag.StringVar(&codeString, "code", "", "When used, runs the code provided.")
+	flag.BoolVar(&generateGlobal, "final", false, "Generates a list of all final objects - useful for debugging.")
 	flag.Parse()
 }
