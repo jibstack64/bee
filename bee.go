@@ -64,7 +64,7 @@ func main() {
 		os.Exit(1)
 	} else {
 		for r := 0; r < len(parsed); r++ {
-			if err, pointer := Run(parsed[r]); err != nil {
+			if pointer, err := Run(parsed[r]); err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			} else if pointer == -1 {

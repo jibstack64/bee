@@ -190,7 +190,7 @@ func CheckInvalids(t string) *Error {
 }
 
 // Parses and runs the tokens provided.
-func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to change it around, shut up vscode
+func Run(tokens []*Token) (int, error) { // fine...
 	// parse objects, strings, etc.
 	for t := len(tokens) - 1; t > -1; t-- {
 		token := tokens[t]
@@ -208,7 +208,7 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 				// function
 				if tokens[t-1].Object != nil {
 					if tokens[t-1].Object.Symbol == "" {
-						return NotCallableError.Format(tokens[t-1].Origin), -2
+						return -2, NotCallableError.Format(tokens[t-1].Origin)
 					}
 				}
 				if o := FetchObject(tokens[t-1].Origin); o != nil {
@@ -221,7 +221,7 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 						r, err = tokens[t-1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t-1].Object, tokens[t+1].Object)
 					}
 					if err != nil {
-						return err, -2
+						return -2, err
 					} else {
 						tokens[t-1].Object.Result = r
 					}
@@ -232,7 +232,7 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 					if o, err := Objectify(tokens[t-1].Origin); err != nil {
 						err = CheckInvalids(tokens[t-1].Origin)
 						if err != nil {
-							return err.Format(tokens[t-1].Origin), -2
+							return -2, err.Format(tokens[t-1].Origin)
 						} else {
 							tokens[t-1].Object = NewObject(tokens[t-1].Origin, nil)
 						}
@@ -242,13 +242,13 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 				}
 				// no no!
 				if tokens[t-1].Origin[0] == BUILT_IN {
-					return NotAssignableError.Format(tokens[t-1].Origin), -2
+					return -2, NotAssignableError.Format(tokens[t-1].Origin)
 				}
 				// func funcs!
 				if tokens[t+1].Object.Result == nil && tokens[t+1].Origin[0] == '@' {
 					c, err := tokens[t+1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t+1].Object)
 					if err != nil {
-						return err, -2
+						return -2, err
 					} else {
 						tokens[t+1].Object.Result = c
 					}
@@ -291,7 +291,7 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 						case '=':
 							tokens[t-1].Object.Data = v1 == v2.(string)
 						default:
-							return NumericsError.Format(tokens[t-1].Origin), -2
+							return -2, NumericsError.Format(tokens[t-1].Origin)
 						}
 					case bool:
 						switch or[1] {
@@ -305,7 +305,7 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 							tokens[t-1].Object.Data = v1 == v2
 						}
 					default:
-						return NumericsError.Format(tokens[t-1].Origin), -2
+						return -2, NumericsError.Format(tokens[t-1].Origin)
 					}
 				}
 			}
@@ -314,31 +314,31 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 				if token.Origin[0] == SECTION_DEF {
 					err := CheckInvalids(token.Origin[1:])
 					if err != nil {
-						return err.Format(token.Origin), -2
+						return -2, err.Format(token.Origin)
 					} else {
 						token.Object = NewObject(token.Origin[1:], -1) // -1 to be found in main()
-						return nil, -1
+						return -1, nil
 					}
 				} else if token.Origin[0] == SECTION_GOTO {
 					ob := FetchObject(token.Origin[1:])
 					switch c := ob.Data.(type) {
 					case int:
-						return nil, c
+						return c, nil
 					}
 				} else if token.Origin[0] == BLOCKING {
 					ob := FetchObject(token.Origin[1:])
 					if ob == nil {
-						return NoObjectError.Format(token.Origin), -2
+						return -2, NoObjectError.Format(token.Origin)
 					} else {
 						switch c := ob.Data.(type) {
 						case bool:
 							if !c {
-								return nil, -2
+								return -2, nil
 							} else {
 								os.Exit(0)
 							}
 						default:
-							return InvalidObjectError.Format(token.Origin), -2
+							return -2, InvalidObjectError.Format(token.Origin)
 						}
 					}
 				}
@@ -346,7 +346,7 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 			// object
 			if token.Object == nil {
 				if o, err := Objectify(token.Origin); err != nil {
-					return err.Format(token.Origin), -2
+					return -2, err.Format(token.Origin)
 				} else {
 					token.Object = o
 				}
@@ -354,5 +354,5 @@ func Run(tokens []*Token) (error, int) { // pfft! i don't have the time to chang
 		}
 	}
 
-	return nil, -2
+	return -2, nil
 }
