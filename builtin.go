@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 // A built-in object.
@@ -57,6 +58,19 @@ var (
 		if e := ArgCheck(len(v), 0, 0); e != nil {
 			return nil, e.Format(ob.Symbol)
 		}
+		return nil, nil
+	})
+
+	// Time
+	SLEEP = NewBuiltIn("sleep", func(ob *Object, v ...*Object) (*Object, error) {
+		if e := ArgCheck(len(v), 1, 1); e != nil {
+			return nil, e.Format(ob.Symbol)
+		}
+		x, err := Float64Convert(v[0].Data)
+		if err != nil {
+			return nil, err
+		}
+		time.Sleep(time.Duration(x) * time.Second)
 		return nil, nil
 	})
 

@@ -13,6 +13,15 @@ const (
 	// Splits 'lines'
 	SPLITTER = ';'
 
+	// Sections
+	SECTION_GOTO = '^'
+	SECTION_DEF  = '#'
+	BLOCKING     = '!'
+
+	// Commenting
+	COMMENT_START = "<bu"
+	COMMENT_END   = "zz>"
+
 	// Disposable, result
 	DISPOSABLE = string(BUILT_IN) + ":disposable"
 	RESULT     = string(BUILT_IN) + ":result"
@@ -55,10 +64,23 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	} else {
-		for _, p := range parsed {
-			if err = Run(p); err != nil {
+		for r := 0; r < len(parsed); r++ {
+			if err, pointer := Run(parsed[r]); err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
+			} else if pointer == -1 {
+				for _, g := range global {
+					switch c := g.Data.(type) {
+					case int:
+						if c == -1 {
+							g.Data = r
+						}
+					}
+				}
+			} else if pointer == -2 {
+				continue
+			} else {
+				r = pointer
 			}
 		}
 	}

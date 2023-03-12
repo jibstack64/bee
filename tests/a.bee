@@ -1,5 +1,9 @@
-say < [
-    @out <: (0)
-];
 
-say <: "Hey, I'm Isaac!";
+#program;
+
+num1 < @in <: "Num1: ";
+num2 < @in <: "Num2: ";
+
+@out <: num1 <= num2; @out <: "\n";
+
+^program;
