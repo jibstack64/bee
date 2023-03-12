@@ -1,0 +1,14 @@
+
+x < 10;
+y < "";
+
+#program;
+
+x < x <+ 1;
+y < @string <: x;
+
+@out <: "jumbledFox is a " <+ y <+ "\n";
+
+@sleep <: 1;
+
+^program;

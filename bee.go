@@ -80,6 +80,8 @@ func main() {
 			} else if pointer == -2 {
 				continue
 			} else {
+				// regenerate (otherwise you encounter some.. strange stuff)
+				parsed, _ = GenerateTokens(program)
 				r = pointer
 			}
 		}
