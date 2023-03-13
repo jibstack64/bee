@@ -27,6 +27,12 @@ See more examples [here](https://github.com/jibstack64/bee/blob/master/tests).
 
 ---
 
+**`bundle.py`**
+
+As an extra, I made a script that merges the interpreter with a given .bee script. This allows you to generate small standalone executables for your .bee scripts. Simply use [`bundle.py`](https://github.com/jibstack64/bee/blob/master/bundle.py).
+
+---
+
 **Concept:**
 
 All statements end in a semi-colon, including comments, which are formatted as such: `buzz This is a comment;`.

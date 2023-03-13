@@ -84,11 +84,13 @@ func main() {
 	if codeString != "" {
 		program = codeString
 	} else {
-		if fileName == "" {
-			fmt.Println("No input provided.")
-			os.Exit(1)
-		} else {
-			program = read(fileName)
+		if program == "" {
+			if fileName == "" {
+				fmt.Println("No input provided.")
+				os.Exit(1)
+			} else {
+				program = read(fileName)
+			}
 		}
 	}
 
