@@ -1,0 +1,29 @@
+buzz
+
+io.bee
+- jibstack64
+
+Reading and writing files!
+
+;
+
+filename < "io.txt";
+
+@load <: filename;
+
+buzz Smart way to kinda do an if statement;
+exists < @exists;
+exists < exists <= false;
+!exists;
+
+data < @read;
+
+@out <: data <+ "\n";
+
+new < @in <: "New data: ";
+
+@write <: new;
+
+@out <: "Written.\n";
+
+

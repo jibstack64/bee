@@ -131,6 +131,20 @@ I/O:
 
 `@out <:` pumps the given data to stdout.
 
+Files:
+
+`@load <:` loads a file from it's name. You can unload the loaded file by providing this function with an empty string.
+
+`< @exists` gives true if the loaded file exists, otherwise false.
+
+`@write <:` writes the provided data to the loaded file.
+
+`< @read` reads the contents of the loaded file to a variable.
+
+Runtime:
+
+`@run <:` runs the string of code provided.
+
 Holders:
 
 `tmp <` this was originally used for debugging, however I decided to leave it in for funsies.
@@ -140,4 +154,4 @@ Holders:
 That's more-or-less it! I am definitely going to add the following within the coming weeks:
 - [ ] Easy if statements.
 - [ ] Ignoring labels. (essentially functions)
-- [ ] Bindings for more useful functions.
+- [x] Bindings for more useful functions.

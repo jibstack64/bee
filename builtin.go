@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -118,6 +119,67 @@ var (
 		for _, o := range v {
 			s, _ := StringConvert(o.Data)
 			fmt.Print(s)
+		}
+		return nil, nil
+	})
+
+	// Files
+	loaded = ""
+	LOAD   = NewBuiltIn("load", func(ob *Object, v ...*Object) (*Object, error) {
+		if e := ArgCheck(len(v), 1, 1); e != nil {
+			return nil, e.Format(ob.Symbol)
+		}
+		s, _ := StringConvert(v[0].Data)
+		loaded = s
+		return nil, nil
+	})
+	EXISTS = NewBuiltIn("exists", func(ob *Object, v ...*Object) (*Object, error) {
+		if e := ArgCheck(len(v), 0, 0); e != nil {
+			return nil, e.Format(ob.Symbol)
+		}
+		if _, err := os.Stat(loaded); errors.Is(err, os.ErrNotExist) && err != nil {
+			return NewObject(RESULT, false), nil
+		} else if err != nil {
+			return nil, err
+		} else {
+			return NewObject(RESULT, true), nil
+		}
+	})
+	READ = NewBuiltIn("read", func(ob *Object, v ...*Object) (*Object, error) {
+		if e := ArgCheck(len(v), 0, 0); e != nil {
+			return nil, e.Format(ob.Symbol)
+		}
+		if loaded == "" {
+			return nil, NoLoadedFileError.Raw()
+		}
+		if f, err := os.ReadFile(loaded); err != nil {
+			return nil, err
+		} else {
+			return NewObject(RESULT, string(f)), nil
+		}
+	})
+	WRITE = NewBuiltIn("write", func(ob *Object, v ...*Object) (*Object, error) {
+		if e := ArgCheck(len(v), 1, 1); e != nil {
+			return nil, e.Format(ob.Symbol)
+		}
+		if loaded == "" {
+			return nil, NoLoadedFileError.Raw()
+		}
+		s, _ := StringConvert(v[0].Data)
+		err := os.WriteFile(loaded, []byte(s), 0644)
+		return nil, err
+	})
+
+	// Runtime
+	RUN = NewBuiltIn("run", func(ob *Object, v ...*Object) (*Object, error) {
+		if e := ArgCheck(len(v), 1, 1); e != nil {
+			return nil, e.Format(ob.Symbol)
+		}
+		s, _ := StringConvert(v[0].Data)
+		if t, err := GenerateTokens(s); err != nil {
+			return nil, err
+		} else {
+			start(t)
 		}
 		return nil, nil
 	})

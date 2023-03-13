@@ -38,4 +38,6 @@ var (
 	NotCallableError   = NewError("object '%s' is not callable.")
 
 	NumericsError = NewError("numerics error '%s'.")
+
+	NoLoadedFileError = NewError("no file loaded.")
 )

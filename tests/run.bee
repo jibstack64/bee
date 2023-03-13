@@ -1,0 +1,21 @@
+buzz
+
+run.bee
+- jibstack64
+
+Essentially the equivalent of Python's eval().
+
+;
+
+fn < @in <: ".bee filename: ";
+
+@load <: fn;
+
+exists < @exists;
+exists < exists <= false;
+!exists;
+
+data < @read;
+
+@run <: data;
+

@@ -45,16 +45,50 @@ var (
 	program string
 )
 
+func read(fn string) string {
+	if raw, err := os.ReadFile(fn); err != nil {
+		fmt.Printf("'%s' does not exist or missing access.\n", fn)
+		os.Exit(1)
+		return ""
+	} else {
+		return string(raw)
+	}
+}
+
+func start(parsed [][]*Token) {
+	for r := 0; r < len(parsed); r++ {
+		if pointer, err := Run(parsed[r]); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		} else if pointer == -1 {
+			for _, g := range global {
+				switch c := g.Data.(type) {
+				case int:
+					if c == -1 {
+						g.Data = r
+					}
+				}
+			}
+		} else if pointer == -2 {
+			continue
+		} else {
+			// regenerate (otherwise you encounter some.. strange stuff)
+			parsed, _ = GenerateTokens(program)
+			r = pointer
+		}
+	}
+}
+
 func main() {
 	// Get the code
 	if codeString != "" {
 		program = codeString
 	} else {
-		if raw, err := os.ReadFile(fileName); err != nil {
-			fmt.Printf("'%s' does not exist.\n", fileName)
+		if fileName == "" {
+			fmt.Println("No input provided.")
 			os.Exit(1)
 		} else {
-			program = string(raw)
+			program = read(fileName)
 		}
 	}
 
@@ -63,27 +97,7 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	} else {
-		for r := 0; r < len(parsed); r++ {
-			if pointer, err := Run(parsed[r]); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			} else if pointer == -1 {
-				for _, g := range global {
-					switch c := g.Data.(type) {
-					case int:
-						if c == -1 {
-							g.Data = r
-						}
-					}
-				}
-			} else if pointer == -2 {
-				continue
-			} else {
-				// regenerate (otherwise you encounter some.. strange stuff)
-				parsed, _ = GenerateTokens(program)
-				r = pointer
-			}
-		}
+		start(parsed)
 	}
 	if generateGlobal {
 		for id, object := range global {

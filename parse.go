@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"reflect"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -23,8 +24,8 @@ func NewToken(origin string, object *Object) *Token {
 
 // Regex
 var (
-	stringMatcher = GenerateRegexp("^\"[^\"]*\"$")
-	numMatcher    = GenerateRegexp("^-?\\d+(?:\\.\\d+)?$")
+	stringMatcher = GenerateRegexp(`^["'].*["']$`)
+	numMatcher    = GenerateRegexp(`^-?\d+(?:\.\d+)?$`)
 )
 
 // Generates a regex, ignoring the error.
@@ -50,6 +51,7 @@ func Objectify(s string) (*Object, *Error) {
 			ob = NewObject(DISPOSABLE, c)
 		} else if s == "true" {
 			ob = NewObject(DISPOSABLE, true)
+
 		} else if s == "false" {
 			ob = NewObject(DISPOSABLE, false)
 		} else if s == "nil" {
@@ -66,7 +68,8 @@ func Objectify(s string) (*Object, *Error) {
 // Generates tokens from code.
 func GenerateTokens(code string) ([][]*Token, error) {
 	allTokens := [][]*Token{}
-	for l, line := range strings.Split(code, string(SPLITTER)) {
+	split := strings.Split(code, string(SPLITTER))
+	for l, line := range split {
 
 		allTokens = append(allTokens, []*Token{})
 		tmp := ""
@@ -132,6 +135,8 @@ func StringConvert(v interface{}) (string, error) {
 		return strconv.FormatBool(c), nil
 	case nil:
 		return "nil", nil
+	case func(*Object, ...*Object) (*Object, error):
+		return runtime.FuncForPC(reflect.ValueOf(c).Pointer()).Name(), nil
 	default:
 		return c.(string), nil
 	}
@@ -245,12 +250,14 @@ func Run(tokens []*Token) (int, error) { // fine...
 					return -2, NotAssignableError.Format(tokens[t-1].Origin)
 				}
 				// func funcs!
-				if tokens[t+1].Object.Result == nil && tokens[t+1].Origin[0] == '@' {
-					c, err := tokens[t+1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error))(tokens[t+1].Object)
-					if err != nil {
-						return -2, err
-					} else {
-						tokens[t+1].Object.Result = c
+				if tokens[t+1].Object.Result == nil {
+					if f, ok := tokens[t+1].Object.Data.(func(ob *Object, v ...*Object) (*Object, error)); ok {
+						c, err := f(tokens[t+1].Object)
+						if err != nil {
+							return -2, err
+						} else {
+							tokens[t+1].Object.Result = c
+						}
 					}
 				}
 				if or[1] == '#' {
@@ -296,7 +303,6 @@ func Run(tokens []*Token) (int, error) { // fine...
 					case bool:
 						switch or[1] {
 						case '=':
-							fmt.Println("bool")
 							tokens[t-1].Object.Data = v1 == v2.(bool)
 						}
 					case nil:
