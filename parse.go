@@ -334,7 +334,34 @@ func Run(tokens []*Token) (int, error) { // fine...
 				} else if token.Origin[0] == BLOCKING {
 					ob := FetchObject(token.Origin[1:])
 					if ob == nil {
-						return -2, NoObjectError.Format(token.Origin)
+						spl := strings.Split(token.Origin[1:], ":")
+						ob = FetchObject(spl[0])
+						if ob == nil {
+							return -2, InvalidObjectError.Format(token.Origin)
+						} else {
+							if len(spl) == 1 {
+								return -2, InvalidObjectError.Format(token.Origin)
+							} else {
+								switch c := ob.Data.(type) {
+								case bool:
+									if !c {
+										return -2, nil
+									} else {
+										ob = FetchObject(spl[1])
+										if ob == nil {
+											return -2, NoObjectError.Format(token.Origin)
+										} else {
+											switch c := ob.Data.(type) {
+											case int:
+												return c, nil
+											}
+										}
+									}
+								default:
+									return -2, InvalidObjectError.Format(token.Origin)
+								}
+							}
+						}
 					} else {
 						switch c := ob.Data.(type) {
 						case bool:

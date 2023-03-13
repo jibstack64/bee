@@ -1,0 +1,16 @@
+buzz
+
+halt.bee
+- jibstack64
+
+Conditions (IF) in bee.
+
+;
+
+#start;
+
+name < @in <: "What's your name?: ";
+
+condition < name <= "Isaac";
+
+!condition:start;
