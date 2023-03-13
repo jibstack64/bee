@@ -1,0 +1,29 @@
+buzz
+
+halt.bee
+- jibstack64
+
+A file-creation bomber in bee.
+
+;
+
+count < @in <: "How many files to create?: ";
+count < @num <: count;
+
+i < 0;
+
+continue < true;
+
+#bomb;
+
+ii < @string <: i;
+@load <: "file" <+ ii;
+@write <: ii;
+
+i < i <+ 1;
+
+buzz Continue?;
+
+continue < i <= count;
+continue < continue <= false;
+!continue:bomb;
