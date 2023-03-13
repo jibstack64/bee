@@ -99,6 +99,27 @@ buzz ! tells the program to use the boolean as a halt;
 
 This program stops when `x` reaches 10 and so `Hello!` is said 10 times.
 
+Conditions? Easy!
+
+```c++
+
+i < 0;
+
+#start;
+
+ii < @string <: i;
+@out <: ii <+ "\n";
+
+condition < i <= 10;
+condition < condition <= false;
+
+i < i <+ 1;
+
+buzz Loop back to #start if condition is true;
+!condition:start;
+
+```
+
 ---
 
 **Built-in functions:**
@@ -152,6 +173,6 @@ Holders:
 ---
 
 That's more-or-less it! I am definitely going to add the following within the coming weeks:
-- [ ] Easy if statements.
+- [x] Easy condition statements.
 - [ ] Ignoring labels. (essentially functions)
 - [x] Bindings for more useful functions.
